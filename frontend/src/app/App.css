@@ -1,1 +1,23 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --color-neon-lime: #ccff00;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f6f6f4;
+  color: #000000;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.bg-dot-matrix {
+  background-color: #f7f7f5;
+  background-image: radial-gradient(#d4d4d0 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}

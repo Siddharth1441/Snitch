@@ -49,3 +49,22 @@ async function sendTokenResponse(user, res,message) {
         res.status(500).json({ message: 'Internal server error' });
     }
 }   
+
+export const login = async (req, res) => {
+
+    const { email, password } = req.body;
+    
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+        return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+        return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    await sendTokenResponse(user, res, 'User logged in successfully')
+}
