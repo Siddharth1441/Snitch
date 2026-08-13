@@ -68,3 +68,10 @@ export const login = async (req, res) => {
 
     await sendTokenResponse(user, res, 'User logged in successfully')
 }
+
+export const googleCallback = async (req, res) => {
+  
+    console.log(req.user);
+
+    res.redirect('http://localhost:5173/health');
+}

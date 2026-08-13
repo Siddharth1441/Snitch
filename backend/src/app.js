@@ -4,6 +4,10 @@ import cors from 'cors';
 import dns from 'dns';
 import morgan from 'morgan';
 import authRouter from './routes/auth.route.js';
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { config } from './config/config.js';
+
 dns.setServers([
     '1.1.1.1',
     '8.8.8.8'
@@ -20,11 +24,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(passport.initialize());
 app.use('/api/auth', authRouter);
 
+passport.use(new GoogleStrategy({
+    clientID: config.GOOGLE_CLIENT_ID,
+    clientSecret: config.GOOGLE_CLIENT_SECRET,
+    callbackURL: config.GOOGLE_CALLBACK_URL
+}, async (accessToken, refreshToken, profile, done) => {
+    // Handle user authentication logic here
+    return done(null, profile);
+}));
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
 
 export default app;

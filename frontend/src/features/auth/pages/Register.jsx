@@ -334,6 +334,8 @@ const Register = () => {
               </label>
             </div>
 
+            <a href="/api/auth/google">register with Google</a>
+
             {/* SUBMIT BUTTON */}
             <div className="relative pt-3 -rotate-[0.4deg]">
               <button
