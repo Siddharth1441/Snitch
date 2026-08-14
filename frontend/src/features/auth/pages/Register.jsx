@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useSelector, useDispatch } from 'react-redux'
 import { useAuth } from '../hook/useAuth.js'
 import { setError } from '../state/auth.slice.js'
+import ContinueWithGoogle from '../components/ContinueWithGoogle.jsx'
 
 const Register = () => {
   const { handleRegister } = useAuth()
@@ -334,7 +335,19 @@ const Register = () => {
               </label>
             </div>
 
-            <a href="/api/auth/google">register with Google</a>
+            {/* OR DIVIDER */}
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t-2 border-black"></div>
+              <span className="flex-shrink mx-4 text-xs font-mono font-bold text-black uppercase tracking-widest bg-[#fbfbf9] px-2">
+                OR
+              </span>
+              <div className="flex-grow border-t-2 border-black"></div>
+            </div>
+
+            {/* GOOGLE OAUTH BUTTON */}
+            <div className="relative -rotate-[0.3deg]">
+              <ContinueWithGoogle href="/api/auth/google" label="CONTINUE WITH GOOGLE" />
+            </div>
 
             {/* SUBMIT BUTTON */}
             <div className="relative pt-3 -rotate-[0.4deg]">
