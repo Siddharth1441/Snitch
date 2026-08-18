@@ -7,6 +7,7 @@ import authRouter from './routes/auth.route.js';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { config } from './config/config.js';
+import productRouter from "../src/routes/product.routes.js";
 
 dns.setServers([
     '1.1.1.1',
@@ -26,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use('/api/auth', authRouter);
-
+app.use('/api/product',productRouter)
 passport.use(new GoogleStrategy({
     clientID: config.GOOGLE_CLIENT_ID,
     clientSecret: config.GOOGLE_CLIENT_SECRET,
