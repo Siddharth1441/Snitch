@@ -86,10 +86,14 @@ const Register = () => {
     }
 
     try {
-      await handleRegister(formData)
+      const res = await handleRegister(formData)
       setSuccess(true)
       setTimeout(() => {
-        navigate('/login')
+        if (formData.isSeller || res?.user?.role === 'seller') {
+          navigate('/create-product')
+        } else {
+          navigate('/login')
+        }
       }, 1500)
     } catch (err) {
       console.error('Registration error:', err)

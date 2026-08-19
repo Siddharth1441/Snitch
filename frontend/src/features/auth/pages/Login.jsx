@@ -67,13 +67,17 @@ const Login = () => {
     }
 
     try {
-      await handleLogin({
+      const res = await handleLogin({
         email: formData.email,
         password: formData.password,
       })
       setSuccess(true)
       setTimeout(() => {
-        navigate('/')
+        if (res?.user?.role === 'seller') {
+          navigate('/create-product')
+        } else {
+          navigate('/')
+        }
       }, 1000)
     } catch (err) {
       console.error('Login error:', err)
