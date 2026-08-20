@@ -27,10 +27,26 @@ const Home = () => {
         </Link>
 
         {/* User Account / Navigation Bar */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
           {user ? (
-            <div className="flex items-center gap-3">
-              <div className="bg-[#ccff00] border-2 border-black px-4 py-1.5 text-xs sm:text-sm font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center gap-3 flex-wrap">
+              {user.role === 'seller' && (
+                <>
+                  <Link
+                    to="/seller/dashboard"
+                    className="bg-[#ccff00] text-black hover:bg-lime-400 border-2 border-black px-4 py-1.5 text-xs sm:text-sm font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5"
+                  >
+                    SELLER DASHBOARD
+                  </Link>
+                  <Link
+                    to="/seller/create-product"
+                    className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-1.5 text-xs sm:text-sm font-mono font-bold tracking-wider uppercase transition-transform hover:-translate-y-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    + DROP
+                  </Link>
+                </>
+              )}
+              <div className="bg-[#e3e3dc] border-2 border-black px-4 py-1.5 text-xs sm:text-sm font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                 {user.fullname || user.email} [{user.role || 'USER'}]
               </div>
               <button
@@ -93,12 +109,31 @@ const Home = () => {
                   You are logged in as <span className="font-bold underline">{user.email}</span>. Access all restricted drops, exclusive lookbooks, and order tracking from your archive dashboard.
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <div className="bg-[#ccff00] text-black font-black text-xs px-4 py-2 border-2 border-black uppercase tracking-wider">
-                    STATUS: ACTIVE RECRUIT
-                  </div>
-                  <div className="bg-black text-white font-mono text-xs px-4 py-2 border-2 border-black uppercase tracking-wider">
-                    ROLE: {user.role || 'BUYER'}
-                  </div>
+                  {user.role === 'seller' ? (
+                    <>
+                      <Link
+                        to="/seller/dashboard"
+                        className="bg-[#ccff00] text-black font-black text-xs px-5 py-2.5 border-2 border-black uppercase tracking-wider hover:bg-lime-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5"
+                      >
+                        OPEN SELLER DASHBOARD →
+                      </Link>
+                      <Link
+                        to="/seller/create-product"
+                        className="bg-black text-[#ccff00] font-mono text-xs px-5 py-2.5 border-2 border-black uppercase tracking-wider hover:bg-neutral-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5"
+                      >
+                        + NEW PRODUCT DROP
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-[#ccff00] text-black font-black text-xs px-4 py-2 border-2 border-black uppercase tracking-wider">
+                        STATUS: ACTIVE RECRUIT
+                      </div>
+                      <div className="bg-black text-white font-mono text-xs px-4 py-2 border-2 border-black uppercase tracking-wider">
+                        ROLE: {user.role || 'BUYER'}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

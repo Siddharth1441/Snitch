@@ -29,10 +29,11 @@ async function sendTokenResponse(user, res,message) {
  export const register = async (req, res) => {
 
     const { email, contact, password, fullname, isSeller } = req.body;
+    const normalizedEmail = email.trim().toLowerCase();
 
     try {
         const existingUser = await userModel.findOne({
-            $or: [{ email }, { contact }]
+            $or: [{ email: normalizedEmail }, { contact }]
         });
 
         if (existingUser) {
@@ -40,7 +41,7 @@ async function sendTokenResponse(user, res,message) {
         }
 
         const user = await userModel.create({
-            email, contact, password, fullname, role: isSeller ? 'seller' : 'buyer'
+            email: normalizedEmail, contact, password, fullname, role: isSeller ? 'seller' : 'buyer'
         });
         await sendTokenResponse(user, res, 'User registered successfully')
 
@@ -53,8 +54,9 @@ async function sendTokenResponse(user, res,message) {
 export const login = async (req, res) => {
 
     const { email, password } = req.body;
+    const normalizedEmail = email.trim().toLowerCase();
     
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email: normalizedEmail });
 
     if (!user) {
         return res.status(400).json({ message: 'Invalid email or password' });

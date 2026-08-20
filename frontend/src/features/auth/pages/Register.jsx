@@ -90,7 +90,7 @@ const Register = () => {
       setSuccess(true)
       setTimeout(() => {
         if (formData.isSeller || res?.user?.role === 'seller') {
-          navigate('/create-product')
+          navigate('/seller/dashboard')
         } else {
           navigate('/login')
         }

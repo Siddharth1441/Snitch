@@ -74,7 +74,7 @@ const Login = () => {
       setSuccess(true)
       setTimeout(() => {
         if (res?.user?.role === 'seller') {
-          navigate('/create-product')
+          navigate('/seller/dashboard')
         } else {
           navigate('/')
         }
