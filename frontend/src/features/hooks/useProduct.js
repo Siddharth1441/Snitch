@@ -1,6 +1,7 @@
-import { createProduct, getSellerProducts } from "../products/services/product.api.js";
+import { createProduct, getSellerProducts, getAllproducts } from "../products/services/product.api.js";
 import { 
     setSellerProducts, 
+    setProducts,
     setProductLoading, 
     setProductError, 
     setProductSuccess,
@@ -70,6 +71,27 @@ export const useProduct = () => {
         }
     }
 
+    async function handleGetAllProducts() {
+        try {
+            dispatch(setProductLoading(true));
+            dispatch(setProductError(null));
+            const data = await getAllproducts();
+            dispatch(setProducts(data.products || []));
+            return data.products;
+        } catch (err) {
+            let errorMessage = 'Failed to fetch products catalog.';
+            if (err?.response?.data?.message) {
+                errorMessage = err.response.data.message;
+            } else if (err?.message) {
+                errorMessage = err.message;
+            }
+            dispatch(setProductError(errorMessage));
+            throw err;
+        } finally {
+            dispatch(setProductLoading(false));
+        }
+    }
+
     const resetStatus = () => {
         dispatch(clearProductStatus());
     };
@@ -77,10 +99,12 @@ export const useProduct = () => {
     return {
         handleCreateProduct,
         handleGetSellerProducts,
+        handleGetAllProducts,
         resetStatus,
         loading: productState?.loading || false,
         error: productState?.error || null,
         success: productState?.success || false,
-        sellerProducts: productState?.sellerProducts || []
+        sellerProducts: productState?.sellerProducts || [],
+        products: productState?.products || []
     };
 };
