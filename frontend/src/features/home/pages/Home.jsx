@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useProduct } from '../../hooks/useProduct.js'
 import { useAuth } from '../../auth/hook/useAuth.js'
 
 const Home = () => {
+  const navigate = useNavigate()
   const user = useSelector((state) => state.auth.user)
   const { handleLogout } = useAuth()
   const { handleGetAllProducts, loading, error, products } = useProduct()
@@ -324,7 +325,16 @@ const Home = () => {
               return (
                 <div
                   key={product._id}
-                  className="bg-white border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex flex-col justify-between group overflow-hidden"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/product/${product._id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/product/${product._id}`)
+                    }
+                  }}
+                  className="bg-white border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex flex-col justify-between group overflow-hidden block"
                 >
                   <div>
                     {/* IMAGE CONTAINER */}
@@ -391,17 +401,19 @@ const Home = () => {
 
                   {/* ACTION BUTTONS */}
                   <div className="p-4 pt-0 grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(product)
-                        setActiveImageIndex(0)
-                      }}
-                      className="w-full bg-white hover:bg-neutral-100 text-black border-2 border-black py-2.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer text-center"
+                    <Link
+                      to={`/product/${product._id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full bg-white hover:bg-neutral-100 text-black border-2 border-black py-2.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer text-center block"
                     >
                       INSPECT
-                    </button>
+                    </Link>
                     <button
-                      onClick={() => handleAddToCart(product.title)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleAddToCart(product.title)
+                      }}
                       className="w-full bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black py-2.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer text-center"
                     >
                       + ADD DROP
@@ -422,9 +434,10 @@ const Home = () => {
               const formattedPrice = (product.price?.amount || 0).toLocaleString('en-IN')
 
               return (
-                <div
+                <Link
                   key={product._id}
-                  className="bg-white border-3 border-black p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                  to={`/product/${product._id}`}
+                  className="bg-white border-3 border-black p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 block"
                 >
                   <div className="flex items-center gap-4 flex-grow">
                     {/* THUMBNAIL */}
@@ -472,23 +485,22 @@ const Home = () => {
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(product)
-                        setActiveImageIndex(0)
-                      }}
-                      className="bg-white hover:bg-neutral-100 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                    <span
+                      className="bg-white hover:bg-neutral-100 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                     >
                       INSPECT
-                    </button>
+                    </span>
                     <button
-                      onClick={() => handleAddToCart(product.title)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleAddToCart(product.title)
+                      }}
                       className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                     >
                       + ADD
                     </button>
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>

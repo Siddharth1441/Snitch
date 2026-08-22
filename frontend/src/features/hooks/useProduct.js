@@ -1,4 +1,4 @@
-import { createProduct, getSellerProducts, getAllproducts } from "../products/services/product.api.js";
+import { createProduct, getSellerProducts, getAllproducts, getproductById } from "../products/services/product.api.js";
 import { 
     setSellerProducts, 
     setProducts,
@@ -92,6 +92,26 @@ export const useProduct = () => {
         }
     }
 
+    async function handleGetProductById(productId) {
+        try {
+            dispatch(setProductLoading(true));
+            dispatch(setProductError(null));
+            const data = await getproductById(productId);
+            return data.product || data;
+        } catch (err) {
+            let errorMessage = 'Failed to fetch product.';
+            if (err?.response?.data?.message) {
+                errorMessage = err.response.data.message;
+            } else if (err?.message) {
+                errorMessage = err.message;
+            }
+            dispatch(setProductError(errorMessage));
+            throw err;
+        } finally {
+            dispatch(setProductLoading(false));
+        }
+    }
+
     const resetStatus = () => {
         dispatch(clearProductStatus());
     };
@@ -100,6 +120,7 @@ export const useProduct = () => {
         handleCreateProduct,
         handleGetSellerProducts,
         handleGetAllProducts,
+        handleGetProductById,
         resetStatus,
         loading: productState?.loading || false,
         error: productState?.error || null,
