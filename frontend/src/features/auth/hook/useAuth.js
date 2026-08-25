@@ -1,5 +1,5 @@
-import { setUser, setLoading, setError } from "../state/auth.slice.js";
-import { register, login } from "../service/auth.api.js";
+import { setUser, setLoading, setError, setInitialized } from "../state/auth.slice.js";
+import { register, login, getMe } from "../service/auth.api.js";
 import { useDispatch } from "react-redux";
 
 export const useAuth = () => {
@@ -57,15 +57,31 @@ export const useAuth = () => {
     }
   }
 
+  async function handleGetMe() {
+    try {
+      const data = await getMe();
+      if (data?.user) {
+        dispatch(setUser(data.user));
+      }
+    } catch {
+      // No valid session — user stays null
+      dispatch(setUser(null));
+    } finally {
+      dispatch(setInitialized(true));
+    }
+  }
+
   function handleLogout() {
     dispatch(setUser(null));
     dispatch(setError(null));
+    // Clear the token cookie
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   }
 
   return {
     handleRegister,
     handleLogin,
+    handleGetMe,
     handleLogout,
   };
 };
-

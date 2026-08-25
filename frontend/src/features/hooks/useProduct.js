@@ -1,4 +1,4 @@
-import { createProduct, getSellerProducts, getAllproducts, getproductById } from "../products/services/product.api.js";
+import { createProduct, getSellerProducts, getAllproducts, getproductById, createProductVariant, updateVariantStock, deleteProductVariant } from "../products/services/product.api.js";
 import { 
     setSellerProducts, 
     setProducts,
@@ -112,6 +112,21 @@ export const useProduct = () => {
         }
     }
 
+    async function handleCreateProductVariant(productId, variant) {
+        const data = await createProductVariant(productId, variant);
+        return data;
+    }
+
+    async function handleUpdateVariantStock(productId, variantId, stock) {
+        const data = await updateVariantStock(productId, variantId, stock);
+        return data;
+    }
+
+    async function handleDeleteProductVariant(productId, variantId) {
+        const data = await deleteProductVariant(productId, variantId);
+        return data;
+    }
+
     const resetStatus = () => {
         dispatch(clearProductStatus());
     };
@@ -121,6 +136,9 @@ export const useProduct = () => {
         handleGetSellerProducts,
         handleGetAllProducts,
         handleGetProductById,
+        handleCreateProductVariant,
+        handleUpdateVariantStock,
+        handleDeleteProductVariant,
         resetStatus,
         loading: productState?.loading || false,
         error: productState?.error || null,
@@ -128,4 +146,5 @@ export const useProduct = () => {
         sellerProducts: productState?.sellerProducts || [],
         products: productState?.products || []
     };
-};
+};
+

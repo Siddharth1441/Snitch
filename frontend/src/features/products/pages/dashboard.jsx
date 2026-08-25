@@ -431,8 +431,7 @@ const Dashboard = () => {
                   <div className="p-4 pt-0">
                     <button
                       onClick={() => {
-                        setSelectedProduct(product)
-                        setActiveImageIndex(0)
+                        navigate(`/seller/dashboard/product/${product._id}`)
                       }}
                       className="w-full bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black py-2.5 text-xs font-mono font-bold tracking-widest uppercase transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
                     >
@@ -507,8 +506,7 @@ const Dashboard = () => {
 
                     <button
                       onClick={() => {
-                        setSelectedProduct(product)
-                        setActiveImageIndex(0)
+                        navigate(`/seller/dashboard/product/${product._id}`)
                       }}
                       className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-widest uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                     >

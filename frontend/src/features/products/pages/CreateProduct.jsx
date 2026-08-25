@@ -119,10 +119,14 @@ const CreateProduct = () => {
     })
 
     try {
-      await handleCreateProduct(formData)
+      const data = await handleCreateProduct(formData)
       setTimeout(() => {
-        navigate('/')
-      }, 1500)
+        if (data?.product?._id) {
+          navigate(`/seller/dashboard/product/${data.product._id}`)
+        } else {
+          navigate('/seller/dashboard')
+        }
+      }, 1000)
     } catch (err) {
       console.error('Failed to create product:', err)
     }

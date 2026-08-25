@@ -7,6 +7,7 @@ const authSlice = createSlice({
         user:null,
         loading:false,
         error:null,
+        initialized: false, // true once session restore attempt is complete
     },
     reducers:{
         setUser:(state,action)=>{
@@ -17,10 +18,13 @@ const authSlice = createSlice({
         },
         setError:(state,action)=>{
             state.error = action.payload
+        },
+        setInitialized:(state,action)=>{
+            state.initialized = action.payload
         }
     }
 })
 
-export const {setUser,setLoading,setError} = authSlice.actions
+export const {setUser,setLoading,setError,setInitialized} = authSlice.actions
 
 export default authSlice.reducer
