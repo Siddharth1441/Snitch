@@ -11,6 +11,11 @@ const CreateProduct = () => {
   const [description, setDescription] = useState('')
   const [priceAmount, setPriceAmount] = useState('')
   const [priceCurrency, setPriceCurrency] = useState('INR')
+  const [sizes, setSizes] = useState([])
+  const [customSize, setCustomSize] = useState('')
+
+  const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
+  const numericSizes = ['28', '30', '32', '34', '36', '38', '40', '42']
   
   // Images: index 0 is Hero image, remaining indices 1-6 are secondary images
   const [heroImage, setHeroImage] = useState(null) // File object
@@ -76,6 +81,22 @@ const CreateProduct = () => {
     setTags(tags.filter((t) => t !== tagToRemove))
   }
 
+  const toggleSize = (size) => {
+    setSizes((currentSizes) => currentSizes.includes(size)
+      ? currentSizes.filter((currentSize) => currentSize !== size)
+      : [...currentSizes, size]
+    )
+  }
+
+  const addCustomSize = (event) => {
+    event.preventDefault()
+    const normalizedSize = customSize.trim().toUpperCase()
+    if (normalizedSize && !sizes.includes(normalizedSize)) {
+      setSizes((currentSizes) => [...currentSizes, normalizedSize])
+    }
+    setCustomSize('')
+  }
+
   // Calculate total drop assets
   const totalAssetsCount = (heroImage ? 1 : 0) + secondaryImages.length
 
@@ -104,11 +125,17 @@ const CreateProduct = () => {
       return
     }
 
+    if (sizes.length === 0) {
+      setValidationError('PLEASE SELECT AT LEAST ONE AVAILABLE SIZE')
+      return
+    }
+
     const formData = new FormData()
     formData.append('title', title.trim())
     formData.append('description', description.trim())
     formData.append('priceAmount', priceAmount)
     formData.append('priceCurrency', priceCurrency)
+    formData.append('sizes', sizes.join(','))
 
     // Append images (hero first, then secondary)
     if (heroImage) {
@@ -349,6 +376,104 @@ const CreateProduct = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* SECTION: AVAILABLE SIZES */}
+          <div className="relative pt-2">
+            <div className="inline-block bg-[#ccff00] text-black font-black uppercase text-xs px-2 py-0.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-1">
+              AVAILABLE SIZES <span className="text-red-600">*</span>
+            </div>
+            <div className="border-3 border-black bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-4">
+              <div>
+                <span className="block mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+                  APPAREL SIZES
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {standardSizes.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      aria-pressed={sizes.includes(size)}
+                      className={`w-11 h-11 rounded-full border-2 border-black font-mono text-xs font-black transition-all cursor-pointer ${
+                        sizes.includes(size)
+                          ? 'bg-black text-[#ccff00] ring-2 ring-[#ccff00]'
+                          : 'bg-white text-black hover:bg-[#ccff00]'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="block mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+                  WAIST / NUMERIC SIZES
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {numericSizes.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      aria-pressed={sizes.includes(size)}
+                      className={`w-11 h-11 rounded-full border-2 border-black font-mono text-xs font-black transition-all cursor-pointer ${
+                        sizes.includes(size)
+                          ? 'bg-black text-[#ccff00] ring-2 ring-[#ccff00]'
+                          : 'bg-white text-black hover:bg-[#ccff00]'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customSize}
+                  onChange={(e) => setCustomSize(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addCustomSize(e)
+                  }}
+                  placeholder="CUSTOM SIZE (E.G. FREE SIZE)"
+                  className="min-w-0 flex-1 border-2 border-black px-3 py-2 font-mono text-xs font-bold uppercase outline-none bg-[#f9f9f6] placeholder-neutral-400 focus:ring-2 focus:ring-[#ccff00]"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomSize}
+                  className="border-2 border-black bg-black px-3 py-2 font-mono text-xs font-black uppercase text-[#ccff00] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-neutral-800"
+                >
+                  ADD
+                </button>
+              </div>
+
+              {sizes.length > 0 && (
+                <div className="border-t-2 border-dashed border-neutral-300 pt-3">
+                  <span className="block mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+                    SELECTED FOR THIS DROP ({sizes.length})
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => toggleSize(size)}
+                        className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-[#ccff00] px-3 py-1.5 font-mono text-xs font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-red-400"
+                        title={`Remove size ${size}`}
+                      >
+                        {size} <span aria-hidden="true">×</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="mt-1 font-mono text-[10px] uppercase text-neutral-500">
+              Select every size available for this drop. Add stock and variant-specific sizes from the seller portal after publishing.
+            </p>
           </div>
 
           {/* SECTION: CATEGORY TAGS */}

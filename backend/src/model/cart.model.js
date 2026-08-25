@@ -14,13 +14,12 @@ const cartSchema  = new mongoose.Schema({
                 ref:'product',
                 required:true
             },
-            varient:{
+            variant:{
                 type:mongoose.Schema.ObjectId,
-                ref:'variant',
-
+                ref:'product',
             },
             quantity:{
-                type:mongoose.Schema.ObjectId,
+                type:Number,
                 default:1
             },
             price:{

@@ -5,6 +5,11 @@ export async function createProduct(req,res) {
 
     const {title, description, priceAmount,priceCurrency} = req.body
     const seller = req.user
+    const sizes = String(req.body.sizes || '')
+        .split(',')
+        .map((size) => size.trim())
+        .filter(Boolean)
+        .filter((size, index, allSizes) => allSizes.indexOf(size) === index)
 
     const images = await Promise.all(req.files.map(async (file) => {
         return await uploadFile({
@@ -20,6 +25,7 @@ export async function createProduct(req,res) {
             amount: priceAmount,
             currency: priceCurrency || 'INR'
         },
+        sizes,
         seller: seller._id,
         images
     })

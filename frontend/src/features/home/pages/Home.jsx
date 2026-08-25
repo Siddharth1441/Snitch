@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/hook/useAuth.js'
 const Home = () => {
   const navigate = useNavigate()
   const user = useSelector((state) => state.auth.user)
+  const cartItems = useSelector((state) => state.cart.items)
   const { handleLogout } = useAuth()
   const { handleGetAllProducts, loading, error, products } = useProduct()
 
@@ -112,6 +113,12 @@ const Home = () => {
 
         {/* NAVIGATION LINKS & AUTH */}
         <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <Link
+            to="/cart"
+            className="bg-[#ccff00] hover:bg-lime-400 text-black border-2 border-black px-3 py-1.5 text-xs font-mono font-black tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          >
+            CART ({cartItems.reduce((total, item) => total + (item.quantity || 0), 0)})
+          </Link>
           {user ? (
             <>
               <div className="bg-neon-lime border-2 border-black px-3 py-1.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
@@ -379,6 +386,17 @@ const Home = () => {
                         {product.description}
                       </p>
 
+                      {product.sizes?.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] font-mono font-bold uppercase text-neutral-500">SIZES:</span>
+                          {product.sizes.map((size) => (
+                            <span key={size} className="border border-black bg-[#f4f4f0] px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase">
+                              {size}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="flex justify-between items-center pt-2 border-t-2 border-dashed border-neutral-300">
                         <div>
                           <span className="text-[10px] font-mono text-neutral-500 uppercase block">PRICE</span>
@@ -470,6 +488,11 @@ const Home = () => {
                       <p className="text-xs text-neutral-600 line-clamp-2 max-w-xl leading-relaxed">
                         {product.description}
                       </p>
+                      {product.sizes?.length > 0 && (
+                        <div className="font-mono text-[11px] text-neutral-600 uppercase">
+                          SIZES: {product.sizes.join(', ')}
+                        </div>
+                      )}
                       <div className="text-[11px] font-mono text-neutral-500">
                         DATE: {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'} | ASSETS: {product.images?.length || 0}
                       </div>

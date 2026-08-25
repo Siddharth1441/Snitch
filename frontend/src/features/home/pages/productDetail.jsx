@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { useSelector } from 'react-redux'
 import { useProduct } from '../../hooks/useProduct.js'
+import { useCart } from '../../cart/hook/useCart.js'
 
 const getCurrencySymbol = (currency) => {
   switch (currency) {
@@ -34,20 +36,34 @@ const getAttributeEntries = (attr) => {
   return []
 }
 
+const splitSizes = (value) => String(value || '')
+  .split(',')
+  .map((size) => size.trim())
+  .filter(Boolean)
+
+const getVariantSizes = (variant) => splitSizes(
+  getAttributeEntries(variant?.attributes)
+    .find(([key]) => key.toLowerCase() === 'size')?.[1]
+)
+
 const getStockBadge = (stock) => {
   if (stock === 0) return { label: 'OUT OF STOCK', cls: 'bg-red-100 border-red-500 text-red-600' }
-  if (stock <= 5) return { label: `LOW STOCK (${stock} LEFT)`, cls: 'bg-amber-100 border-amber-500 text-amber-700' }
-  return { label: `IN STOCK (${stock})`, cls: 'bg-emerald-100 border-emerald-600 text-emerald-700' }
+  return { label: 'IN STOCK', cls: 'bg-emerald-100 border-emerald-600 text-emerald-700' }
 }
 
 const ProductDetail = () => {
   const { productId } = useParams()
   const { handleGetProductById } = useProduct()
+  const { handleAddItemToCart } = useCart()
+  const cartItems = useSelector((state) => state.cart.items)
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [selectedVariantId, setSelectedVariantId] = useState(null)
+  const [selectedSize, setSelectedSize] = useState(null)
+  const [cartError, setCartError] = useState(null)
+  const [addingToCart, setAddingToCart] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -60,9 +76,14 @@ const ProductDetail = () => {
         if (isMounted) {
           setProduct(productData)
           const vars = productData?.varients || productData?.variants || []
-          if (vars.length > 0) {
+          const sizes = productData?.sizes || []
+          if (vars.length > 0 && sizes.length === 0) {
             setSelectedVariantId(vars[0]._id)
+          } else {
+            setSelectedVariantId(null)
           }
+          setSelectedSize(null)
+          setActiveImageIndex(0)
         }
       } catch (requestError) {
         if (isMounted) setError(requestError?.response?.data?.message || 'Unable to load this product.')
@@ -89,34 +110,56 @@ const ProductDetail = () => {
     .map((img) => img.url)
     .filter(Boolean)
 
-  // Selected variant images
+  const availableSizes = Array.from(new Set([
+    ...(product?.sizes || []).flatMap((size) => splitSizes(size)),
+    ...variants
+      .flatMap((variant) => getVariantSizes(variant))
+  ]))
+
+  // Only show the selected variant's photos. Base product photos are a fallback.
   const selectedVariantImages = (selectedVariant?.images || [])
     .map((img) => img.uri || img.url)
     .filter(Boolean)
 
-  // All variant images across all variants
-  const allVariantImages = variants.flatMap((v) =>
-    (v.images || []).map((img) => img.uri || img.url).filter(Boolean)
-  )
-
-  // Combine product images + variant images, eliminating duplicates
-  const displayImages = Array.from(
-    new Set([...productImages, ...selectedVariantImages, ...allVariantImages])
-  )
+  const displayImages = selectedVariantImages.length > 0
+    ? Array.from(new Set(selectedVariantImages))
+    : productImages
 
   const activeImage = displayImages[activeImageIndex] || displayImages[0]
 
   const handleSelectVariant = (variantId) => {
-    setSelectedVariantId(variantId)
     const targetVar = variants.find((v) => v._id === variantId)
-    const targetVarImgs = (targetVar?.images || []).map((img) => img.uri || img.url).filter(Boolean)
-    if (targetVarImgs.length > 0) {
-      const idx = displayImages.indexOf(targetVarImgs[0])
-      if (idx !== -1) {
-        setActiveImageIndex(idx)
-      }
+    const targetSizes = getVariantSizes(targetVar)
+    if (selectedSize && targetSizes.length > 0 && !targetSizes.some((size) => String(size).toLowerCase() === String(selectedSize).toLowerCase())) return
+    setSelectedVariantId(variantId)
+    const nextSize = targetSizes.find((size) => String(size).toLowerCase() === String(selectedSize).toLowerCase()) || targetSizes[0]
+    setSelectedSize(nextSize || selectedSize || null)
+    setActiveImageIndex(0)
+  }
+
+  const handleSelectSize = (size) => {
+    setSelectedSize(size)
+    const matchingVariant = variants.find((variant) =>
+      getVariantSizes(variant).some((variantSize) => String(variantSize).toLowerCase() === String(size).toLowerCase())
+    )
+    setSelectedVariantId(matchingVariant?._id || null)
+    setActiveImageIndex(0)
+  }
+
+  const handleAddToCart = async () => {
+    if (!selectedVariantId || !selectedVariant || (availableSizes.length > 0 && !selectedSize) || (selectedVariant.stock || 0) === 0) return
+    try {
+      setAddingToCart(true)
+      setCartError(null)
+      await handleAddItemToCart({ productId, variantId: selectedVariantId })
+    } catch (requestError) {
+      setCartError(requestError?.response?.data?.message || 'Unable to add this item to cart.')
+    } finally {
+      setAddingToCart(false)
     }
   }
+
+  const visibleVariants = variants
 
   return (
     <div className="min-h-screen bg-dot-matrix bg-[#f4f4f0] text-black font-sans selection:bg-[#ccff00] selection:text-black">
@@ -127,9 +170,14 @@ const ProductDetail = () => {
             <span className="text-2xl sm:text-3xl font-black tracking-tighter text-black uppercase font-display block leading-none">SNITCH</span>
           </div>
         </Link>
-        <Link to="/" className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-          BACK TO CATALOG
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/cart" className="bg-[#ccff00] hover:bg-lime-400 text-black border-2 border-black px-4 py-2 text-xs font-mono font-black uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+            CART ({cartItems.reduce((total, item) => total + (item.quantity || 0), 0)})
+          </Link>
+          <Link to="/" className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+            BACK TO CATALOG
+          </Link>
+        </div>
       </header>
 
       <main className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8">
@@ -160,7 +208,7 @@ const ProductDetail = () => {
               <div className="space-y-4">
                 <div className="relative aspect-square bg-[#e3e3dc] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center overflow-hidden">
                   {activeImage ? (
-                    <img src={activeImage} alt={product.title} className="w-full h-full object-cover" />
+                    <img key={`${selectedVariantId || 'base'}-${activeImage}`} src={activeImage} alt={product.title} className="w-full h-full object-cover" />
                   ) : (
                     <span className="font-mono text-sm text-neutral-500 uppercase">NO IMAGE ASSET</span>
                   )}
@@ -216,15 +264,41 @@ const ProductDetail = () => {
                       </span>
                     ) : (
                       <span className="border border-emerald-600 bg-emerald-100 text-emerald-700 px-2 py-0.5 font-mono text-[10px] font-bold uppercase">
-                        IN STOCK (DEFAULT ITEM)
+                        IN STOCK
                       </span>
                     )}
                   </div>
 
-                  {variants.length > 0 ? (
+                  {availableSizes.length > 0 && (
+                    <div className="border-2 border-black bg-[#f4f4f0] p-3">
+                      <span className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-2">SELECT SIZE <strong className="text-red-600">*</strong></span>
+                      <div className="flex flex-wrap gap-2">
+                        {availableSizes.map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => handleSelectSize(size)}
+                            className={`w-12 h-12 rounded-full border-2 border-black font-mono text-xs font-black uppercase transition-all cursor-pointer ${
+                              selectedSize === size
+                                ? 'bg-black text-[#ccff00] ring-4 ring-[#ccff00]'
+                                : 'bg-white text-black hover:bg-[#ccff00]'
+                            }`}
+                            aria-pressed={selectedSize === size}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                      {!selectedSize && <p className="mt-2 font-mono text-[10px] font-bold uppercase text-red-600">Please select a size to continue.</p>}
+                    </div>
+                  )}
+
+                  {visibleVariants.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {variants.map((v) => {
+                      {visibleVariants.map((v) => {
                         const isSelected = v._id === selectedVariantId
+                        const variantSizes = getVariantSizes(v)
+                        const isInSelectedSize = !selectedSize || variantSizes.length === 0 || variantSizes.some((size) => String(size).toLowerCase() === String(selectedSize).toLowerCase())
                         const entries = getAttributeEntries(v.attributes)
                         const stockInfo = getStockBadge(v.stock || 0)
                         const isOutOfStock = (v.stock || 0) === 0
@@ -235,11 +309,12 @@ const ProductDetail = () => {
                             key={v._id}
                             type="button"
                             onClick={() => handleSelectVariant(v._id)}
+                            disabled={!isInSelectedSize || isOutOfStock}
                             className={`p-3 border-2 text-left flex flex-col justify-between gap-2 transition-all cursor-pointer ${
                               isSelected
                                 ? 'border-[#ccff00] bg-[#000] text-[#ccff00] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
                                 : 'border-black bg-white text-black hover:bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                            } ${isOutOfStock ? 'opacity-60' : ''}`}
+                            } ${isOutOfStock ? 'opacity-60 cursor-not-allowed' : ''} ${!isInSelectedSize ? 'opacity-35 cursor-not-allowed' : ''}`}
                           >
                             <div className="flex justify-between items-start gap-1 w-full">
                               <div className="flex flex-wrap gap-1">
@@ -253,7 +328,7 @@ const ProductDetail = () => {
                                           : 'border-black bg-neutral-100 text-black'
                                       }`}
                                     >
-                                      {k}: {val}
+                                      {k.toLowerCase() === 'size' ? `SIZE: ${isSelected ? selectedSize : variantSizes.join(', ')}` : `${k}: ${val}`}
                                     </span>
                                   ))
                                 ) : (
@@ -278,13 +353,8 @@ const ProductDetail = () => {
                     </div>
                   ) : (
                     <div className="p-3.5 border-2 border-black bg-[#000] text-[#ccff00] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 font-mono text-[11px] font-bold uppercase border border-[#ccff00] bg-neutral-900 text-[#ccff00]">
-                          OPTION: STANDARD BASE ITEM
-                        </span>
-                      </div>
-                      <span className="font-mono text-[10px] font-bold uppercase text-neutral-300">
-                        DEFAULT ITEM SELECTED
+                      <span className="px-2 py-0.5 font-mono text-[11px] font-bold uppercase border border-[#ccff00] bg-neutral-900 text-[#ccff00]">
+                        {selectedSize ? `NO VARIANT FOR SIZE ${selectedSize}` : 'SELECT A SIZE TO VIEW ITS VARIANT'}
                       </span>
                     </div>
                   )}
@@ -297,11 +367,13 @@ const ProductDetail = () => {
 
                 <button
                   type="button"
-                  disabled={selectedVariant && (selectedVariant.stock || 0) === 0}
+                  onClick={handleAddToCart}
+                  disabled={!selectedVariantId || !selectedVariant || (availableSizes.length > 0 && !selectedSize) || (selectedVariant.stock || 0) === 0}
                   className="w-full bg-[#ccff00] hover:bg-lime-400 disabled:opacity-40 disabled:cursor-not-allowed border-2 border-black px-5 py-3.5 font-mono text-sm font-black uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
                 >
-                  {selectedVariant && (selectedVariant.stock || 0) === 0 ? 'SOLD OUT' : '+ ADD DROP TO CART'}
+                  {addingToCart ? 'ADDING...' : !selectedSize && availableSizes.length > 0 ? 'SELECT SIZE FIRST' : selectedVariant && (selectedVariant.stock || 0) === 0 ? 'SOLD OUT' : '+ ADD DROP TO CART'}
                 </button>
+                {cartError && <p className="border-2 border-red-500 bg-red-100 px-3 py-2 font-mono text-xs font-bold uppercase text-red-700">{cartError}</p>}
 
                 <div className="grid grid-cols-3 gap-3 text-xs font-mono uppercase pt-2">
                   <div className="bg-[#f4f4f0] border-2 border-black p-3"><span className="block text-neutral-500 text-[10px]">TOTAL ASSETS</span><strong>{displayImages.length}</strong></div>
