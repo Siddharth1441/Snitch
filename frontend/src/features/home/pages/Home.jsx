@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useProduct } from '../../hooks/useProduct.js'
 import { useAuth } from '../../auth/hook/useAuth.js'
+import { useCart } from '../../cart/hook/useCart.js'
 
 const Home = () => {
   const navigate = useNavigate()
   const user = useSelector((state) => state.auth.user)
   const cartItems = useSelector((state) => state.cart.items)
   const { handleLogout } = useAuth()
+  const { handleAddItemToCart } = useCart()
   const { handleGetAllProducts, loading, error, products } = useProduct()
 
   // Local state for search, sort, view mode & modal
@@ -64,11 +66,30 @@ const Home = () => {
     return result
   }, [products, searchQuery, sortBy])
 
-  const handleAddToCart = (productTitle) => {
-    setAddedToCartToast(`"${productTitle}" ADDED TO CART ARCHIVE!`)
-    setTimeout(() => {
-      setAddedToCartToast(null)
-    }, 3500)
+  const handleAddToCart = async (product) => {
+    if (!product?._id) return
+
+    const defaultVariant = Array.isArray(product.varients) ? product.varients[0] : null
+
+    if (!defaultVariant?._id) {
+      navigate(`/product/${product._id}`)
+      return
+    }
+
+    try {
+      const response = await handleAddItemToCart({
+        productId: product._id,
+        variantId: defaultVariant._id,
+      })
+
+      if (response?.success) {
+        setAddedToCartToast(`"${product.title}" ADDED TO CART ARCHIVE!`)
+        setTimeout(() => setAddedToCartToast(null), 3500)
+      }
+    } catch (requestError) {
+      setAddedToCartToast(requestError?.response?.data?.message || 'Unable to add item to cart.')
+      setTimeout(() => setAddedToCartToast(null), 3500)
+    }
   }
 
   return (
@@ -430,7 +451,7 @@ const Home = () => {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        handleAddToCart(product.title)
+                        handleAddToCart(product)
                       }}
                       className="w-full bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black py-2.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer text-center"
                     >
@@ -516,7 +537,7 @@ const Home = () => {
                     <button
                       onClick={(e) => {
                         e.preventDefault()
-                        handleAddToCart(product.title)
+                        handleAddToCart(product)
                       }}
                       className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                     >
@@ -651,7 +672,7 @@ const Home = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      handleAddToCart(selectedProduct.title)
+                      handleAddToCart(selectedProduct)
                       setSelectedProduct(null)
                     }}
                     className="w-full bg-[#ccff00] hover:bg-lime-400 text-black border-2 border-black py-2.5 text-xs font-mono font-black uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] cursor-pointer"

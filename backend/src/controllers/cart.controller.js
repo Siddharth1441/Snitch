@@ -1,7 +1,62 @@
+import mongoose from "mongoose";
 import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
 
 const getCartForUser = (userId) => cartModel.findOne({ user: userId });
+const getCartWithTotal = (userId) => cartModel.aggregate([
+    {
+        $match: {
+            user: new mongoose.Types.ObjectId(userId)
+        }
+    },
+    { $unwind: { path: "$items" } },
+    {
+        $lookup: {
+            from: "products",
+            localField: "items.product",
+            foreignField: "_id",
+            as: "items.product"
+        }
+    },
+    { $unwind: { path: "$items.product" } },
+    {
+        $set: {
+            "items.product.varients": {
+                $filter: {
+                    input: "$items.product.varients",
+                    as: "variant",
+                    cond: { $eq: ["$$variant._id", "$items.variant"] }
+                }
+            }
+        }
+    },
+    {
+        $match: {
+            "items.product.varients.0": { $exists: true }
+        }
+    },
+    {
+        $addFields: {
+            itemPrice: {
+                price: {
+                    $multiply: [
+                        "$items.quantity",
+                        "$items.price.amount"
+                    ]
+                },
+                currency: "$items.price.currency"
+            }
+        }
+    },
+    {
+        $group: {
+            _id: "$_id",
+            totalPrice: { $sum: "$itemPrice.price" },
+            currency: { $first: "$itemPrice.currency" },
+            items: { $push: "$items" }
+        }
+    }
+]);
 
 export const addToCart = async (req, res) => {
     const { productId, variantId } = req.params;
@@ -28,8 +83,10 @@ export const addToCart = async (req, res) => {
 };
 
 export const getCart = async (req, res) => {
-    const cart = (await getCartForUser(req.user._id)) || await cartModel.create({ user: req.user._id, items: [] });
-    await cart.populate("items.product");
+    const existingCart = await getCartForUser(req.user._id);
+    const cartDocument = existingCart || await cartModel.create({ user: req.user._id, items: [] });
+    const [aggregatedCart] = await getCartWithTotal(req.user._id);
+    const cart = aggregatedCart || { ...cartDocument.toObject(), totalPrice: 0, currency: null };
     return res.status(200).json({ message: "Cart fetched successfully", success: true, cart });
 };
 
