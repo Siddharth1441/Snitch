@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
+import { createOrder } from "../services/payment.service.js";
 
 const getCartForUser = (userId) => cartModel.findOne({ user: userId });
 const getCartWithTotal = (userId) => cartModel.aggregate([
@@ -113,3 +114,14 @@ export const removeCartItem = async (req, res) => {
     await cart.populate("items.product");
     return res.status(200).json({ message: "Item removed from cart", success: true, cart });
 };
+
+export const createOrderController = async (req,res) => {
+    const order  = await createOrder({amount:10,currency:"INR"})
+
+    return res.status(200).json({
+        message:"Order created successfully",
+        success : true,
+        order
+    })
+
+}
