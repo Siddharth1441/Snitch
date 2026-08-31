@@ -15,6 +15,15 @@ export const createCartOrder = async () => {
     return response.data
 }
 
+export const verifyCartOrder  = async ({razorpay_order_id, razorpay_payment_id, razorpay_signature}) => {
+    const response = await cartApiInstance.post('/payment/verify/order',{
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+    })
+    return response.data   
+}
+
 export const getCart = async () => (await cartApiInstance.get('/')).data
 export const updateItem = async (itemId, quantity) => (await cartApiInstance.patch(`/item/${itemId}`, { quantity })).data
 export const removeItem = async (itemId) => (await cartApiInstance.delete(`/item/${itemId}`)).data

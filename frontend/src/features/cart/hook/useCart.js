@@ -1,4 +1,4 @@
-import { addItem, getCart, updateItem, removeItem, createCartOrder } from '../service/cart.api.js'
+import { addItem, getCart, updateItem, removeItem, createCartOrder,verifyCartOrder } from '../service/cart.api.js'
 import { useDispatch } from 'react-redux'
 import { setItems } from '../state/cart.slice.js'
 
@@ -34,5 +34,10 @@ export const useCart = () => {
         return data.order
     }
 
-    return { handleAddItemToCart, handleGetCart, handleUpdateCartItem, handleRemoveCartItem ,handleCreateCartOrder}
+    async function handleVerifyCartOrder({razorpay_order_id, razorpay_payment_id, razorpay_signature}) {
+        const data = await verifyCartOrder({razorpay_order_id, razorpay_payment_id, razorpay_signature})
+        return data.success
+    }    
+
+    return { handleAddItemToCart, handleGetCart, handleUpdateCartItem, handleRemoveCartItem ,handleCreateCartOrder, handleVerifyCartOrder}
 }
