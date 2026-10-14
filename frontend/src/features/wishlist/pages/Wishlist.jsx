@@ -17,7 +17,7 @@ const Wishlist = () => {
       navigate('/login')
       return
     }
-    api.get('/')
+    api.get('')
       .then((res) => setProducts(res.data.products || []))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
