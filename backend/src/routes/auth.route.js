@@ -19,10 +19,11 @@ router.get('/google',
     passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback',
-    passport.authenticate('google', { session:false,
-        failureRedirect:config.NODE_ENV==="development" ? "http://localhost:5173/login" : "/login"
+    passport.authenticate('google', {
+        session: false,
+        failureRedirect: `${config.FRONTEND_URL}/login`,
     }),
     googleCallback,
-)
+);
 
 export default router;

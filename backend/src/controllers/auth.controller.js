@@ -94,20 +94,18 @@ export const googleCallback = async (req, res) => {
         const setupToken = jwt.sign({
             id: user._id,
             needsSetup: true,
-        }, config.JWT_SECRET, { expiresIn: '30m' })
+        }, config.JWT_SECRET, { expiresIn: '30m' });
 
-        const redirectBase = config.NODE_ENV === 'development' ? 'http://localhost:5173' : ''
-        return res.redirect(`${redirectBase}/complete-profile?token=${setupToken}`)
+        return res.redirect(`${config.FRONTEND_URL}/complete-profile?token=${setupToken}`);
     }
 
     // Existing Google user — log in directly
     const token = jwt.sign({
         id: user._id,
-    }, config.JWT_SECRET, { expiresIn: '7d' })
+    }, config.JWT_SECRET, { expiresIn: '7d' });
 
-    res.cookie('token', token)
-    const redirectBase = config.NODE_ENV === 'development' ? 'http://localhost:5173' : ''
-    return res.redirect(redirectBase);
+    res.cookie('token', token);
+    return res.redirect(config.FRONTEND_URL);
 }
 
 export const completeProfile = async (req, res) => {
