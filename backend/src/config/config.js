@@ -24,11 +24,18 @@ if (!process.env.RAZORPAY_KEY_SECRET) {
     throw new Error('RAZORPAY_KEY_SECRET is not defined in the environment variables');
 }
 
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+const nodeEnv = process.env.NODE_ENV || 'development';
+const frontendUrl = (
+    process.env.FRONTEND_URL
+    || (nodeEnv === 'production' ? 'https://snitch-gules.vercel.app' : 'http://localhost:5173')
+).replace(/\/+$/, '');
+const backendUrl = (
+    process.env.BACKEND_URL
+    || (nodeEnv === 'production' ? 'https://snitch-dl71.onrender.com' : 'http://localhost:3000')
+).replace(/\/+$/, '');
 const localOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
 const configuredOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean)
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim().replace(/\/+$/, '')).filter(Boolean)
     : [];
 
 export const config = {
@@ -37,7 +44,7 @@ export const config = {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || `${backendUrl}/api/auth/google/callback`,
-    NODE_ENV: process.env.NODE_ENV || 'development',
+    NODE_ENV: nodeEnv,
     FRONTEND_URL: frontendUrl,
     BACKEND_URL: backendUrl,
     CORS_ORIGINS: [...new Set([...localOrigins, ...configuredOrigins, frontendUrl])],

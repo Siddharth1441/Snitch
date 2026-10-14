@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://snitch-dl71.onrender.com/api/:path*"
+    }
+  ]
+}
