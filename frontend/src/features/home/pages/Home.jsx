@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useProduct } from '../../hooks/useProduct.js'
 import { useAuth } from '../../auth/hook/useAuth.js'
@@ -7,6 +7,7 @@ import { useCart } from '../../cart/hook/useCart.js'
 
 const Home = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const user = useSelector((state) => state.auth.user)
   const cartItems = useSelector((state) => state.cart.items)
   const { handleLogout } = useAuth()
@@ -69,6 +70,11 @@ const Home = () => {
   const handleAddToCart = async (product) => {
     if (!product?._id) return
 
+    if (!user) {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
+
     const defaultVariant = Array.isArray(product.varients) ? product.varients[0] : null
 
     if (!defaultVariant?._id) {
@@ -87,6 +93,10 @@ const Home = () => {
         setTimeout(() => setAddedToCartToast(null), 3500)
       }
     } catch (requestError) {
+      if (requestError?.response?.status === 401 || requestError?.response?.status === 403) {
+        navigate('/login', { state: { from: location.pathname } })
+        return
+      }
       setAddedToCartToast(requestError?.response?.data?.message || 'Unable to add item to cart.')
       setTimeout(() => setAddedToCartToast(null), 3500)
     }
