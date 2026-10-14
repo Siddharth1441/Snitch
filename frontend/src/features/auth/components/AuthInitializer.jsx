@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useAuth } from '../hook/useAuth.js'
 import { useSelector } from 'react-redux'
+import { useCart } from '../../cart/hook/useCart.js'
 
 /**
  * AuthInitializer
@@ -10,12 +11,21 @@ import { useSelector } from 'react-redux'
  */
 const AuthInitializer = ({ children }) => {
   const { handleGetMe } = useAuth()
+  const { handleGetCart } = useCart()
   const initialized = useSelector((state) => state.auth.initialized)
+  const user = useSelector((state) => state.auth.user)
 
   useEffect(() => {
     handleGetMe()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (initialized && user) {
+      handleGetCart().catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialized, user])
 
   // Show a minimal full-screen loader until we know the auth state
   if (!initialized) {

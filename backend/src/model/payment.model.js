@@ -26,13 +26,30 @@ const paymentShema = new mongoose.Schema({
             title:String,
             productId:mongoose.Schema.Types.ObjectId,
             variantId:mongoose.Schema.Types.ObjectId,
+            seller:mongoose.Schema.Types.ObjectId,
             quantity:Number,
             description:String,
-            images:[{url:String}],
+            images:[{url:String, uri:String}],
             price:priceShema
         }
-    ]
-})
+    ],
+    shippingAddress:{
+        fullname:String,
+        phone:String,
+        line1:String,
+        line2:String,
+        city:String,
+        state:String,
+        pincode:String,
+        country:String
+    },
+    fulfillmentStatus:{
+        type:String,
+        enum:["processing","shipped","delivered","cancelled"],
+        default:"processing"
+    }
+}, { timestamps: true })
+
 
 const paymentModel = mongoose.model("payment",paymentShema)
 

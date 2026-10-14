@@ -112,7 +112,7 @@ function FieldInput({ id, label, type = 'text', value, onChange, placeholder, mi
 const SellerProductDetails = () => {
   const { productId } = useParams()
   const navigate = useNavigate()
-  const { handleGetProductById, handleCreateProductVariant, handleUpdateVariantStock, handleDeleteProductVariant } = useProduct()
+  const { handleGetProductById, handleCreateProductVariant, handleUpdateVariantStock, handleDeleteProductVariant, handleDeleteProduct } = useProduct()
 
   const [product, setProduct]          = useState(null)
   const [loading, setLoading]          = useState(true)
@@ -376,6 +376,21 @@ const SellerProductDetails = () => {
             className="bg-black text-[#ccff00] border-2 border-black px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-900 transition-colors cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
           >
             🌐 PUBLIC VIEW
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!window.confirm(`Permanently delete "${product?.title}"? This action cannot be undone.`)) return
+              try {
+                await handleDeleteProduct(productId)
+                navigate('/seller/dashboard')
+              } catch {
+                alert('Failed to delete product. Please try again.')
+              }
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white border-2 border-black px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-colors cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+          >
+            🗑 DELETE
           </button>
         </div>
       </header>

@@ -135,6 +135,12 @@ const Home = () => {
         {/* NAVIGATION LINKS & AUTH */}
         <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <Link
+            to="/shop"
+            className="hidden sm:block text-xs font-mono font-black uppercase tracking-wider hover:underline"
+          >
+            SHOP
+          </Link>
+          <Link
             to="/cart"
             className="bg-[#ccff00] hover:bg-lime-400 text-black border-2 border-black px-3 py-1.5 text-xs font-mono font-black tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
@@ -142,17 +148,23 @@ const Home = () => {
           </Link>
           {user ? (
             <>
-              <div className="bg-neon-lime border-2 border-black px-3 py-1.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                {user.fullname || user.email}
-                {user.isSeller && <span className="font-mono text-[9px] bg-black text-white px-1 ml-1 cursor-default">[SELLER]</span>}
-              </div>
+              <Link
+                to="/profile"
+                className="bg-white hover:bg-[#ccff00] border-2 border-black px-3 py-1.5 text-xs font-mono font-black tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1.5"
+              >
+                <span className="w-4 h-4 bg-black text-[#ccff00] text-[9px] font-black flex items-center justify-center">
+                  {(user.fullname || 'U')[0].toUpperCase()}
+                </span>
+                <span className="hidden sm:inline">{user.fullname?.split(' ')[0] || 'ACCOUNT'}</span>
+                {user.role === 'seller' && <span className="font-mono text-[8px] bg-black text-[#ccff00] px-1">SELLER</span>}
+              </Link>
 
-              {user.isSeller && (
+              {user.role === 'seller' && (
                 <Link
                   to="/seller"
-                  className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-3.5 py-1.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5"
+                  className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-3.5 py-1.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 hidden sm:block"
                 >
-                  SELLER PORTAL ⚡
+                  PORTAL ⚡
                 </Link>
               )}
 
@@ -160,7 +172,7 @@ const Home = () => {
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white border-2 border-black px-3 py-1.5 text-xs font-mono font-bold tracking-wider uppercase transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
               >
-                LOGOUT
+                OUT
               </button>
             </>
           ) : (
@@ -173,7 +185,7 @@ const Home = () => {
               </Link>
               <Link
                 to="/register"
-                className="bg-neon-lime hover:bg-lime-400 text-black border-2 border-black px-4 py-1.5 text-xs font-mono font-black tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5"
+                className="bg-[#ccff00] hover:bg-lime-400 text-black border-2 border-black px-4 py-1.5 text-xs font-mono font-black tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5"
               >
                 REGISTER
               </Link>
@@ -202,7 +214,20 @@ const Home = () => {
               Discover curated streetwear collections created by independent sellers and creators across the platform.
             </p>
 
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+              {[
+                ['tshirts', 'T-SHIRTS'],
+                ['shirts', 'SHIRTS'],
+                ['jeans', 'JEANS'],
+                ['hoodies', 'HOODIES'],
+              ].map(([id, label]) => (
+                <Link key={id} to={`/shop?category=${id}`} className="bg-[#ccff00] border-2 border-black px-3 py-2 text-center text-[10px] font-mono font-black uppercase shadow-[3px_3px_0_0_#000]">
+                  {label}
+                </Link>
+              ))}
+            </div>
             <div className="pt-2 flex items-center gap-4 flex-wrap">
+              <Link to="/shop" className="bg-white border-2 border-black px-5 py-1.5 text-xs font-mono font-bold uppercase shadow-[3px_3px_0_0_#000]">OPEN FULL SHOP</Link>
               <div className="bg-[#ccff00] border-2 border-black px-3.5 py-1.5 text-xs font-mono font-black uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 {products.length} {products.length === 1 ? 'DROP LISTED' : 'TOTAL DROPS LISTED'}
               </div>
@@ -687,10 +712,57 @@ const Home = () => {
       )}
 
       {/* FOOTER */}
-      <footer className="relative z-20 w-full bg-black text-[#ccff00] font-mono text-[11px] sm:text-xs py-3 px-6 sm:px-12 flex justify-between items-center tracking-widest border-t-2 border-black uppercase select-none mt-12">
-        <span className="font-bold">SNITCH // STREETWEAR PUBLIC CATALOG</span>
-        <span className="font-bold">ALL DROPS VERIFIED</span>
+      <footer className="relative z-20 w-full bg-black text-[#ccff00] border-t-4 border-black mt-12">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 py-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Brand */}
+          <div>
+            <div className="text-2xl font-black uppercase tracking-tighter font-display mb-2">SNITCH</div>
+            <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest leading-relaxed">
+              // STREETWEAR PUBLIC CATALOG<br />
+              // EXCLUSIVE DROPS VERIFIED<br />
+              // EST. 2026
+            </div>
+          </div>
+
+          {/* Shop links */}
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest mb-3 text-neutral-400">NAVIGATE</div>
+            <div className="space-y-1.5">
+              <Link to="/" className="block text-xs font-mono font-bold hover:text-white transition-colors">→ ALL DROPS</Link>
+              <Link to="/cart" className="block text-xs font-mono font-bold hover:text-white transition-colors">→ CART ARCHIVE</Link>
+              <Link to="/profile" className="block text-xs font-mono font-bold hover:text-white transition-colors">→ MY ACCOUNT</Link>
+              {user?.role === 'seller' && (
+                <Link to="/seller/dashboard" className="block text-xs font-mono font-bold hover:text-white transition-colors">→ SELLER PORTAL</Link>
+              )}
+              {!user && (
+                <>
+                  <Link to="/login" className="block text-xs font-mono font-bold hover:text-white transition-colors">→ LOGIN</Link>
+                  <Link to="/register" className="block text-xs font-mono font-bold hover:text-white transition-colors">→ REGISTER</Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Info */}
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest mb-3 text-neutral-400">INFO</div>
+            <div className="space-y-1.5 text-xs font-mono text-neutral-400">
+              <div>support@snitch.com</div>
+              <div>© 2026 Snitch. All Rights Reserved.</div>
+              <div className="mt-3">
+                <span className="inline-block bg-[#ccff00] text-black text-[9px] font-black px-2 py-0.5 border border-[#ccff00] uppercase tracking-wider">
+                  ALL DROPS VERIFIED
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-neutral-800 py-2 px-6 sm:px-12 flex justify-between items-center text-[10px] font-mono text-neutral-600 uppercase">
+          <span>SNITCH // STREETWEAR PUBLIC CATALOG</span>
+          <span>SECURE PAYMENTS VIA RAZORPAY</span>
+        </div>
       </footer>
+
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useSelector, useDispatch } from 'react-redux'
 import { useAuth } from '../hook/useAuth.js'
 import { setError } from '../state/auth.slice.js'
@@ -7,6 +7,7 @@ import ContinueWithGoogle from '../components/ContinueWithGoogle.jsx'
 
 const Register = () => {
   const { handleRegister } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const auth = useSelector((state) => state.auth)
@@ -92,7 +93,7 @@ const Register = () => {
         if (formData.isSeller || res?.user?.role === 'seller') {
           navigate('/seller/dashboard')
         } else {
-          navigate('/login')
+          navigate('/login', { state: location.state })
         }
       }, 1500)
     } catch (err) {
@@ -382,5 +383,4 @@ const Register = () => {
 }
 
 export default Register
-
 

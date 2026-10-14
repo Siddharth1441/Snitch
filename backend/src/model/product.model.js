@@ -18,6 +18,20 @@ const productSchema = new mongoose.Schema({
        type:priceShema,
        required:true
     },
+    category: {
+        type: String,
+        enum: ['shirts', 'tshirts', 'jeans', 'trousers', 'jackets', 'hoodies', 'accessories', 'footwear'],
+        default: 'tshirts'
+    },
+    gender: {
+        type: String,
+        enum: ['men', 'women', 'unisex'],
+        default: 'unisex'
+    },
+    tags: {
+        type: [String],
+        default: []
+    },
     sizes: {
         type: [String],
         default: []

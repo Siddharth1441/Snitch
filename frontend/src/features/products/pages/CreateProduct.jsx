@@ -27,6 +27,8 @@ const CreateProduct = () => {
   // Category tags
   const [tags, setTags] = useState(['STREETWEAR', 'LIMITED'])
   const [tagInput, setTagInput] = useState('')
+  const [category, setCategory] = useState('tshirts')
+  const [gender, setGender] = useState('unisex')
 
   // Form field errors
   const [validationError, setValidationError] = useState('')
@@ -136,6 +138,9 @@ const CreateProduct = () => {
     formData.append('priceAmount', priceAmount)
     formData.append('priceCurrency', priceCurrency)
     formData.append('sizes', sizes.join(','))
+    formData.append('tags', tags.join(','))
+    formData.append('category', category)
+    formData.append('gender', gender)
 
     // Append images (hero first, then secondary)
     if (heroImage) {
@@ -474,6 +479,30 @@ const CreateProduct = () => {
             <p className="mt-1 font-mono text-[10px] uppercase text-neutral-500">
               Select every size available for this drop. Add stock and variant-specific sizes from the seller portal after publishing.
             </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1">
+              <span className="font-mono text-[10px] font-bold uppercase">Category</span>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border-2 border-black px-2 py-2 font-mono text-xs uppercase">
+                <option value="tshirts">T-Shirts</option>
+                <option value="shirts">Shirts</option>
+                <option value="jeans">Jeans</option>
+                <option value="trousers">Trousers</option>
+                <option value="hoodies">Hoodies</option>
+                <option value="jackets">Jackets</option>
+                <option value="footwear">Footwear</option>
+                <option value="accessories">Accessories</option>
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="font-mono text-[10px] font-bold uppercase">Gender</span>
+              <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full border-2 border-black px-2 py-2 font-mono text-xs uppercase">
+                <option value="unisex">Unisex</option>
+                <option value="men">Men</option>
+                <option value="women">Women</option>
+              </select>
+            </label>
           </div>
 
           {/* SECTION: CATEGORY TAGS */}

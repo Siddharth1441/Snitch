@@ -31,3 +31,10 @@ export async function getMe() {
     return response.data
 }
 
+export async function completeProfile({ token, isSeller, contact }) {
+    const response = await authApiInstance.post('/complete-profile',
+        { isSeller, contact },
+        { headers: { Authorization: `Bearer ${token}` } }
+    )
+    return response.data
+}

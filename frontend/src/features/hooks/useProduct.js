@@ -1,4 +1,4 @@
-import { createProduct, getSellerProducts, getAllproducts, getproductById, createProductVariant, updateVariantStock, deleteProductVariant } from "../products/services/product.api.js";
+import { createProduct, getSellerProducts, getAllproducts, getproductById, createProductVariant, updateVariantStock, deleteProductVariant, deleteProduct } from "../products/services/product.api.js";
 import { 
     setSellerProducts, 
     setProducts,
@@ -127,6 +127,21 @@ export const useProduct = () => {
         return data;
     }
 
+    async function handleDeleteProduct(productId) {
+        try {
+            const data = await deleteProduct(productId);
+            // Remove from seller products state
+            dispatch(setSellerProducts(
+                (productState.sellerProducts || []).filter(p => p._id !== productId)
+            ));
+            return data;
+        } catch (err) {
+            const msg = err?.response?.data?.message || 'Failed to delete product.';
+            dispatch(setProductError(msg));
+            throw err;
+        }
+    }
+
     const resetStatus = () => {
         dispatch(clearProductStatus());
     };
@@ -139,6 +154,7 @@ export const useProduct = () => {
         handleCreateProductVariant,
         handleUpdateVariantStock,
         handleDeleteProductVariant,
+        handleDeleteProduct,
         resetStatus,
         loading: productState?.loading || false,
         error: productState?.error || null,

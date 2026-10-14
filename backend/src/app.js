@@ -9,6 +9,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { config } from './config/config.js';
 import productRouter from "../src/routes/product.routes.js";
 import cartRouter from "../src/routes/cart.route.js";
+import wishlistRouter from "../src/routes/wishlist.route.js";
 
 dns.setServers([
     '1.1.1.1',
@@ -30,6 +31,7 @@ app.use(passport.initialize());
 app.use('/api/auth', authRouter);
 app.use('/api/products',productRouter)
 app.use('/api/cart',cartRouter)
+app.use('/api/wishlist', wishlistRouter)
 
 passport.use(new GoogleStrategy({
     clientID: config.GOOGLE_CLIENT_ID,

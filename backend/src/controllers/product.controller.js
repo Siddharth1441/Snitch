@@ -3,13 +3,17 @@ import { uploadFile } from "../services/storage.service.js";
 
 export async function createProduct(req,res) {
 
-    const {title, description, priceAmount,priceCurrency} = req.body
+    const {title, description, priceAmount,priceCurrency, category, gender} = req.body
     const seller = req.user
     const sizes = String(req.body.sizes || '')
         .split(',')
         .map((size) => size.trim())
         .filter(Boolean)
         .filter((size, index, allSizes) => allSizes.indexOf(size) === index)
+    const tags = String(req.body.tags || '')
+        .split(',')
+        .map((tag) => tag.trim().toUpperCase())
+        .filter(Boolean)
 
     const images = await Promise.all(req.files.map(async (file) => {
         return await uploadFile({
@@ -26,6 +30,9 @@ export async function createProduct(req,res) {
             currency: priceCurrency || 'INR'
         },
         sizes,
+        tags,
+        category: category || 'tshirts',
+        gender: gender || 'unisex',
         seller: seller._id,
         images
     })
@@ -52,12 +59,51 @@ export async function getSellerProducts(req,res){
 }
 
 export async function getAllProducts (req,res){
-    const products = await productModel.find()
+    const { category, gender, search, sort } = req.query
+    const filter = {}
+    if (category) filter.category = category
+    if (gender) filter.gender = gender
+    if (search) {
+        filter.$or = [
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { tags: { $regex: search, $options: 'i' } }
+        ]
+    }
+
+    let query = productModel.find(filter)
+    if (sort === 'price-asc') query = query.sort({ 'price.amount': 1 })
+    else if (sort === 'price-desc') query = query.sort({ 'price.amount': -1 })
+    else if (sort === 'title') query = query.sort({ title: 1 })
+    else query = query.sort({ createdAt: -1 })
+
+    const products = await query
 
     return res.status(200).json({
         message:"Product Fetch",
         success:true,
         products
+    })
+}
+
+export async function getRelatedProducts(req, res) {
+    const product = await productModel.findById(req.params.id)
+    if (!product) {
+        return res.status(404).json({ message: "Product not found", success: false })
+    }
+
+    const related = await productModel.find({
+        _id: { $ne: product._id },
+        $or: [
+            { category: product.category },
+            { gender: product.gender }
+        ]
+    }).limit(8)
+
+    return res.status(200).json({
+        message: "Related products fetched",
+        success: true,
+        products: related
     })
 }
 export async function getProductDetail(req,res) {
@@ -210,9 +256,19 @@ export async function deleteProductVariant(req, res) {
     }
 }
 
-
-
-
+export async function deleteProduct(req, res) {
+    try {
+        const { id } = req.params
+        const deleted = await productModel.findOneAndDelete({ _id: id, seller: req.user._id })
+        if (!deleted) {
+            return res.status(404).json({ message: "Product not found", success: false })
+        }
+        return res.status(200).json({ message: "Product deleted successfully", success: true })
+    } catch (err) {
+        console.error("Error deleting product:", err)
+        return res.status(500).json({ message: err?.message || "Internal server error", success: false })
+    }
+}
 
 
 

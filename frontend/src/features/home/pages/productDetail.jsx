@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useProduct } from '../../hooks/useProduct.js'
 import { useCart } from '../../cart/hook/useCart.js'
+import { getRelatedProducts } from '../../products/services/product.api.js'
+import axios from 'axios'
 
 const getCurrencySymbol = (currency) => {
   switch (currency) {
@@ -46,6 +48,11 @@ const getVariantSizes = (variant) => splitSizes(
     .find(([key]) => key.toLowerCase() === 'size')?.[1]
 )
 
+const getProductVariants = (product) => {
+  if (Array.isArray(product?.varients)) return product.varients
+  return Array.isArray(product?.variants) ? product.variants : []
+}
+
 const getStockBadge = (stock) => {
   if (stock === 0) return { label: 'OUT OF STOCK', cls: 'bg-red-100 border-red-500 text-red-600' }
   return { label: 'IN STOCK', cls: 'bg-emerald-100 border-emerald-600 text-emerald-700' }
@@ -53,9 +60,12 @@ const getStockBadge = (stock) => {
 
 const ProductDetail = () => {
   const { productId } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { handleGetProductById } = useProduct()
   const { handleAddItemToCart } = useCart()
   const cartItems = useSelector((state) => state.cart.items)
+  const user = useSelector((state) => state.auth.user)
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -64,6 +74,10 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState(null)
   const [cartError, setCartError] = useState(null)
   const [addingToCart, setAddingToCart] = useState(false)
+  const [quantity, setQuantity] = useState(1)
+  const [related, setRelated] = useState([])
+  const [saved, setSaved] = useState(false)
+
 
   useEffect(() => {
     let isMounted = true
@@ -75,15 +89,18 @@ const ProductDetail = () => {
         const productData = await handleGetProductById(productId)
         if (isMounted) {
           setProduct(productData)
-          const vars = productData?.varients || productData?.variants || []
+          const vars = getProductVariants(productData)
           const sizes = productData?.sizes || []
           if (vars.length > 0 && sizes.length === 0) {
-            setSelectedVariantId(vars[0]._id)
+            const inStockVariant = vars.find((variant) => (variant.stock || 0) > 0)
+            setSelectedVariantId((inStockVariant || vars[0])._id)
           } else {
             setSelectedVariantId(null)
           }
           setSelectedSize(null)
           setActiveImageIndex(0)
+          setQuantity(1)
+          getRelatedProducts(productId).then((data) => setRelated(data.products || [])).catch(() => setRelated([]))
         }
       } catch (requestError) {
         if (isMounted) setError(requestError?.response?.data?.message || 'Unable to load this product.')
@@ -102,7 +119,7 @@ const ProductDetail = () => {
 
   const currencySymbol = getCurrencySymbol(product?.price?.currency)
   const formattedPrice = (product?.price?.amount || 0).toLocaleString('en-IN')
-  const variants = product?.varients || product?.variants || []
+  const variants = getProductVariants(product)
   const selectedVariant = variants.find((v) => v._id === selectedVariantId)
 
   // Main product drop images (e.g. Navy Blue Polo) come FIRST in gallery
@@ -139,19 +156,24 @@ const ProductDetail = () => {
 
   const handleSelectSize = (size) => {
     setSelectedSize(size)
-    const matchingVariant = variants.find((variant) =>
+    const matchingVariants = variants.filter((variant) =>
       getVariantSizes(variant).some((variantSize) => String(variantSize).toLowerCase() === String(size).toLowerCase())
     )
+    const matchingVariant = matchingVariants.find((variant) => (variant.stock || 0) > 0) || matchingVariants[0]
     setSelectedVariantId(matchingVariant?._id || null)
     setActiveImageIndex(0)
   }
 
   const handleAddToCart = async () => {
     if (!selectedVariantId || !selectedVariant || (availableSizes.length > 0 && !selectedSize) || (selectedVariant.stock || 0) === 0) return
+    if (!user) {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
     try {
       setAddingToCart(true)
       setCartError(null)
-      await handleAddItemToCart({ productId, variantId: selectedVariantId })
+      await handleAddItemToCart({ productId, variantId: selectedVariantId, quantity })
     } catch (requestError) {
       setCartError(requestError?.response?.data?.message || 'Unable to add this item to cart.')
     } finally {
@@ -174,6 +196,11 @@ const ProductDetail = () => {
           <Link to="/cart" className="bg-[#ccff00] hover:bg-lime-400 text-black border-2 border-black px-4 py-2 text-xs font-mono font-black uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             CART ({cartItems.reduce((total, item) => total + (item.quantity || 0), 0)})
           </Link>
+          {user && (
+            <Link to="/profile" className="hidden sm:block bg-white border-2 border-black px-3 py-2 text-xs font-mono font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ccff00] transition-all">
+              ACCOUNT
+            </Link>
+          )}
           <Link to="/" className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             BACK TO CATALOG
           </Link>
@@ -273,21 +300,29 @@ const ProductDetail = () => {
                     <div className="border-2 border-black bg-[#f4f4f0] p-3">
                       <span className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-2">SELECT SIZE <strong className="text-red-600">*</strong></span>
                       <div className="flex flex-wrap gap-2">
-                        {availableSizes.map((size) => (
-                          <button
-                            key={size}
-                            type="button"
-                            onClick={() => handleSelectSize(size)}
-                            className={`w-12 h-12 rounded-full border-2 border-black font-mono text-xs font-black uppercase transition-all cursor-pointer ${
-                              selectedSize === size
-                                ? 'bg-black text-[#ccff00] ring-4 ring-[#ccff00]'
-                                : 'bg-white text-black hover:bg-[#ccff00]'
-                            }`}
-                            aria-pressed={selectedSize === size}
-                          >
-                            {size}
-                          </button>
-                        ))}
+                        {availableSizes.map((size) => {
+                          const sizeVariants = variants.filter((variant) =>
+                            getVariantSizes(variant).some((variantSize) => String(variantSize).toLowerCase() === String(size).toLowerCase())
+                          )
+                          const isOutOfStock = sizeVariants.length > 0 && !sizeVariants.some((variant) => (variant.stock || 0) > 0)
+
+                          return (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => handleSelectSize(size)}
+                              disabled={isOutOfStock}
+                              className={`w-12 h-12 rounded-full border-2 border-black font-mono text-xs font-black uppercase transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                                selectedSize === size
+                                  ? 'bg-black text-[#ccff00] ring-4 ring-[#ccff00]'
+                                  : 'bg-white text-black hover:bg-[#ccff00]'
+                              }`}
+                              aria-pressed={selectedSize === size}
+                            >
+                              {size}
+                            </button>
+                          )
+                        })}
                       </div>
                       {!selectedSize && <p className="mt-2 font-mono text-[10px] font-bold uppercase text-red-600">Please select a size to continue.</p>}
                     </div>
@@ -365,6 +400,20 @@ const ProductDetail = () => {
                   <p className="text-sm sm:text-base leading-relaxed text-neutral-700">{product.description}</p>
                 </div>
 
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[10px] font-bold uppercase">Qty</span>
+                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-8 h-8 border-2 border-black bg-white font-black cursor-pointer">-</button>
+                  <span className="font-mono font-bold w-6 text-center">{quantity}</span>
+                  <button type="button" onClick={() => setQuantity((q) => q + 1)} className="w-8 h-8 border-2 border-black bg-white font-black cursor-pointer">+</button>
+                  {user && (
+                    <button type="button" onClick={async () => {
+                      const res = await axios.post(`/api/wishlist/${productId}`, {}, { withCredentials: true })
+                      setSaved((res.data.products || []).some((p) => String(p._id || p) === String(productId)))
+                    }} className="ml-auto border-2 border-black px-3 py-2 font-mono text-[10px] font-black uppercase cursor-pointer">
+                      {saved ? 'SAVED' : 'WISHLIST'}
+                    </button>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleAddToCart}
@@ -382,6 +431,24 @@ const ProductDetail = () => {
                 </div>
               </div>
             </section>
+            {related.length > 0 && (
+              <section className="pt-4">
+                <h2 className="text-2xl font-black uppercase font-serif mb-4">You may also like</h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {related.map((item) => (
+                    <Link key={item._id} to={`/product/${item._id}`} className="bg-white border-2 border-black">
+                      <div className="h-40 bg-[#e3e3dc] border-b-2 border-black">
+                        {item.images?.[0]?.url && <img src={item.images[0].url} alt={item.title} className="w-full h-full object-cover" />}
+                      </div>
+                      <div className="p-3">
+                        <p className="font-black uppercase text-sm line-clamp-1">{item.title}</p>
+                        <p className="font-mono text-xs font-bold">₹{(item.price?.amount || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </main>

@@ -96,12 +96,13 @@ const OrderSuccess = () => {
               </Link>
 
               <Link
-                to="/cart"
-                className="inline-flex items-center justify-center border-2 border-black bg-white px-6 py-3 font-mono text-[11px] font-black uppercase tracking-[0.18em] shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-transform duration-150 hover:-translate-y-0.5"
+                to="/profile"
+                className="inline-flex items-center justify-center border-2 border-black bg-black text-[#ccff00] px-6 py-3 font-mono text-[11px] font-black uppercase tracking-[0.18em] shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-transform duration-150 hover:-translate-y-0.5"
               >
-                View cart
+                View My Orders
               </Link>
             </div>
+
           </div>
         </div>
       </div>

@@ -173,6 +173,37 @@ export const removeCartItem = async (req, res) => {
     .json({ message: "Item removed from cart", success: true, cart });
 };
 
+const FREE_SHIPPING_THRESHOLD = 1999;
+const SHIPPING_FEE = 99;
+
+const normalizeAddress = (address = {}) => ({
+  fullname: String(address.fullname || "").trim(),
+  phone: String(address.phone || "").replace(/\D/g, ""),
+  line1: String(address.line1 || "").trim(),
+  line2: String(address.line2 || "").trim(),
+  city: String(address.city || "").trim(),
+  state: String(address.state || "").trim(),
+  pincode: String(address.pincode || "").trim(),
+  country: String(address.country || "India").trim() || "India",
+});
+
+const isValidAddress = (address) =>
+  address.fullname.length >= 2 &&
+  address.phone.length >= 10 &&
+  address.line1.length >= 3 &&
+  address.city.length >= 2 &&
+  address.state.length >= 2 &&
+  /^\d{6}$/.test(address.pincode);
+
+export const getCheckoutConfig = async (_req, res) => {
+  return res.status(200).json({
+    success: true,
+    keyId: config.RAZORPAY_KEY_ID,
+    freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
+    shippingFee: SHIPPING_FEE,
+  });
+};
+
 export const createOrderController = async (req, res) => {
   const [cart] = await getCartWithTotal(req.user._id);
 
@@ -183,13 +214,24 @@ export const createOrderController = async (req, res) => {
     });
   }
 
-  const amount = Number(cart.totalPrice || 0);
-  if (!amount || amount <= 0) {
+  const shippingAddress = normalizeAddress(req.body?.shippingAddress);
+  if (!isValidAddress(shippingAddress)) {
+    return res.status(400).json({
+      message: "A complete shipping address is required",
+      success: false,
+    });
+  }
+
+  const subtotal = Number(cart.totalPrice || 0);
+  if (!subtotal || subtotal <= 0) {
     return res.status(400).json({
       message: "Cart total is invalid",
       success: false,
     });
   }
+
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const amount = subtotal + shipping;
 
   const order = await createOrder({
     amount,
@@ -201,7 +243,9 @@ export const createOrderController = async (req, res) => {
     const variant =
       product.varients?.find(
         (v) => v?._id?.toString() === item.variant?.toString(),
-      ) || null;
+      ) ||
+      product.varients?.[0] ||
+      null;
     const productPrice = product.price || {};
     const variantPrice = variant?.price || {};
 
@@ -209,6 +253,7 @@ export const createOrderController = async (req, res) => {
       title: product.title,
       productId: product._id,
       variantId: item.variant,
+      seller: product.seller,
       quantity: item.quantity,
       description: product.description,
       images: variant?.images?.length ? variant.images : product.images || [],
@@ -230,9 +275,11 @@ export const createOrderController = async (req, res) => {
       orderId: order.id,
     },
     price: {
-      amount: cart.totalPrice,
+      amount,
       currency: cart.currency || "INR",
     },
+    shippingAddress,
+    fulfillmentStatus: "processing",
     orderItems,
   };
 
@@ -292,13 +339,47 @@ export const verifyOrderController = async (req, res) => {
   }
 
   payment.status = "paid";
+  payment.fulfillmentStatus = "processing";
   payment.razorpay.paymentId = razorpay_payment_id;
   payment.razorpay.signature = razorpay_signature;
 
   await payment.save();
 
+  for (const item of payment.orderItems || []) {
+    if (!item.productId || !item.variantId) continue;
+    await productModel.updateOne(
+      { _id: item.productId, "varients._id": item.variantId },
+      { $inc: { "varients.$.stock": -Math.max(1, Number(item.quantity) || 1) } },
+    );
+  }
+
+  await cartModel.findOneAndUpdate(
+    { user: payment.user },
+    { $set: { items: [] } },
+  );
+
   return res.status(200).json({
     message: "Payment verify successfull",
     success: true,
+  });
+};
+
+export const getSellerOrders = async (req, res) => {
+  const orders = await paymentModel.find({
+    status: "paid",
+    "orderItems.seller": req.user._id,
+  }).sort({ createdAt: -1 });
+
+  const sellerOrders = orders.map((order) => ({
+    ...order.toObject(),
+    orderItems: (order.orderItems || []).filter(
+      (item) => String(item.seller) === String(req.user._id),
+    ),
+  }));
+
+  return res.status(200).json({
+    message: "Seller orders fetched",
+    success: true,
+    orders: sellerOrders,
   });
 };

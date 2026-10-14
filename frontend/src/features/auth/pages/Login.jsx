@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useSelector, useDispatch } from 'react-redux'
 import { useAuth } from '../hook/useAuth.js'
 import { setError } from '../state/auth.slice.js'
@@ -7,6 +7,7 @@ import ContinueWithGoogle from '../components/ContinueWithGoogle.jsx'
 
 const Login = () => {
   const { handleLogin } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const auth = useSelector((state) => state.auth)
@@ -76,7 +77,7 @@ const Login = () => {
         if (res?.user?.role === 'seller') {
           navigate('/seller/dashboard')
         } else {
-          navigate('/')
+          navigate(location.state?.from || '/')
         }
       }, 1000)
     } catch (err) {
@@ -304,6 +305,7 @@ const Login = () => {
                 <span>NEW RECRUIT?</span>
                 <Link
                   to="/register"
+                  state={location.state}
                   className="border-2 border-black bg-white px-3.5 py-1 text-black hover:bg-[#ccff00] transition-colors uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                 >
                   INITIALIZE

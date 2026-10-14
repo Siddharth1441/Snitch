@@ -8,7 +8,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const user = useSelector((state) => state.auth.user)
   const { handleLogout } = useAuth()
-  const { handleGetSellerProducts, loading, error, sellerProducts } = useProduct()
+  const { handleGetSellerProducts, handleDeleteProduct, loading, error, sellerProducts } = useProduct()
 
   // Local states for filtering and view options
   const [searchQuery, setSearchQuery] = useState('')
@@ -121,14 +121,21 @@ const Dashboard = () => {
           </Link>
 
           <Link
+            to="/profile"
+            className="bg-white hover:bg-[#ccff00] border-2 border-black px-3 py-1.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          >
+            ACCOUNT
+          </Link>
+
+          <Link
             to="/"
             className="bg-white hover:bg-neutral-100 border-2 border-black px-3 py-1.5 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
-            HOME
+            SHOP
           </Link>
 
           <button
-            onClick={handleLogout}
+            onClick={() => { handleLogout(); navigate('/') }}
             className="bg-red-500 hover:bg-red-600 text-white border-2 border-black px-3 py-1.5 text-xs font-mono font-bold tracking-wider uppercase transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
           >
             LOGOUT
@@ -428,17 +435,32 @@ const Dashboard = () => {
                   </div>
 
                   {/* CARD ACTIONS */}
-                  <div className="p-4 pt-0">
+                  <div className="p-4 pt-0 flex gap-2">
                     <button
                       onClick={() => {
                         navigate(`/seller/dashboard/product/${product._id}`)
                       }}
-                      className="w-full bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black py-2.5 text-xs font-mono font-bold tracking-widest uppercase transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+                      className="flex-1 bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black py-2.5 text-xs font-mono font-bold tracking-widest uppercase transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <span>VIEW DROP DETAILS</span>
+                      <span>MANAGE</span>
                       <span>→</span>
                     </button>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${product.title}"? This cannot be undone.`)) return
+                        try {
+                          await handleDeleteProduct(product._id)
+                        } catch {
+                          alert('Failed to delete product. Please try again.')
+                        }
+                      }}
+                      className="bg-red-500 hover:bg-red-600 text-white border-2 border-black py-2.5 px-3 text-xs font-mono font-bold uppercase transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                      title="Delete product"
+                    >
+                      🗑
+                    </button>
                   </div>
+
                 </div>
               )
             })}
@@ -510,9 +532,24 @@ const Dashboard = () => {
                       }}
                       className="bg-black text-[#ccff00] hover:bg-neutral-900 border-2 border-black px-4 py-2 text-xs font-mono font-bold tracking-widest uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                     >
-                      INSPECT
+                      MANAGE
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${product.title}"? This cannot be undone.`)) return
+                        try {
+                          await handleDeleteProduct(product._id)
+                        } catch {
+                          alert('Failed to delete product.')
+                        }
+                      }}
+                      className="bg-red-500 hover:bg-red-600 text-white border-2 border-black px-3 py-2 text-xs font-mono font-bold uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+                      title="Delete"
+                    >
+                      🗑
                     </button>
                   </div>
+
                 </div>
               )
             })}
