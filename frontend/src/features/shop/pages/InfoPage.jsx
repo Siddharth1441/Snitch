@@ -21,7 +21,7 @@ const PAGES = {
   },
   '/contact': {
     title: 'Contact',
-    body: 'Email support@snitch.com for order help. For seller onboarding, upgrade your account from Profile and list a drop from the seller portal.',
+    body: 'Email siddharthv1441@gmail.com for order help. For seller onboarding, upgrade your account from Profile and list a drop from the seller portal.',
   },
 }
 

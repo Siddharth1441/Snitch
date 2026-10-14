@@ -757,8 +757,8 @@ const Home = () => {
           <div>
             <div className="text-[10px] font-black uppercase tracking-widest mb-3 text-neutral-400">INFO</div>
             <div className="space-y-1.5 text-xs font-mono text-neutral-400">
-              <div>support@snitch.com</div>
-              <div>© 2026 Snitch. All Rights Reserved.</div>
+              <div>siddharthv1441@gmail.com</div>
+              <div>© 2026 Snitch Demo. All Rights Reserved.</div>
               <div className="mt-3">
                 <span className="inline-block bg-[#ccff00] text-black text-[9px] font-black px-2 py-0.5 border border-[#ccff00] uppercase tracking-wider">
                   ALL DROPS VERIFIED
@@ -768,7 +768,7 @@ const Home = () => {
           </div>
         </div>
         <div className="border-t border-neutral-800 py-2 px-6 sm:px-12 flex justify-between items-center text-[10px] font-mono text-neutral-600 uppercase">
-          <span>SNITCH // STREETWEAR PUBLIC CATALOG</span>
+          <span>Created by Siddharth</span>
           <span>SECURE PAYMENTS VIA RAZORPAY</span>
         </div>
       </footer>
